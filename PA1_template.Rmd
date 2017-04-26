@@ -50,8 +50,18 @@ colSums(is.na(df))
 ```
 
 We note that there are 2304 missing values in the steps column, which is the only
-column with missing values. In particular, there are 8 days where all the `steps` 
-entries are missing (2304 = 288 $\times$ 24). We'll deal with those later.
+column with missing values. Let's see which days have the missing entries.
+
+```{r}
+na_idx <- which(is.na(df$steps)) # row ids
+na_dates <- df$date[na_idx]
+unique(na_dates)
+```
+
+
+We see that there are 8 days where the `steps` 
+entries are missing. In fact for those days entries are missing for **all**
+intervals (2304 = 288 $\times$ 24). We'll deal with the missing values later.
 
 ## What is mean total number of steps taken per day?
 
@@ -75,13 +85,18 @@ group_by(date) %>%
 summarize(sum_step_day = sum(steps, na.rm = T))
 ```
 Now, we are ready to plot the histogram.
-```{r}
+```{r hist_total_step_day}
 hist(df2$sum_step_day, xlab = "number of steps in a day", 
      ylab = "count", breaks = 10, col = "gray", main = "Histogram")
 ```
 
-The mean number of steps taken per day is ```r round(mean(df2$sum_step_day), digits = 2)``` and the
-median is ```r median(df2$sum_step_day)```.
+```{r}
+mean_step <- round(mean(df2$sum_step_day), digits = 2)
+median_step <- median(df2$sum_step_day)
+```
+
+The mean number of steps taken per day is ```r mean_step``` and the
+median is ```r median_step```.
 
 ## What is the average daily activity pattern?
 
@@ -108,8 +123,12 @@ with(df3, plot(interval_id, avg_step,type = "l",
 grid() # add grid lines
 ```
 
+```{r}
+int_max <- df3$interval_id[which.max(df3$avg_step)]
+```
+
 The five-minute interval that has the maximum steps on average is the
-```r df3$interval_id[which.max(df3$avg_step)]```-th interval.
+```r int_max```-th interval.
 
 
 ## Imputing missing values
@@ -123,7 +142,11 @@ bias into some calculations or summaries of the data.*
 
 1. *Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)*
 
-The number of rows with missing values is ```r sum(!complete.cases(df))```.
+```{r}
+nrow_NA <- sum(!complete.cases(df))
+```
+
+The number of rows with missing values is ```r nrow_NA```.
 
 2. *Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.*
 
@@ -151,7 +174,7 @@ df_new$steps[na_idx] <- df3$avg_step[na_int_idx]
 
 4. *Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?*
 
-We'll repeat what we did for Question 1, this time for `df_new`.
+We'll repeat what we did above, this time for `df_new`.
 
 ```{r}
 df2_new <- df_new %>%
@@ -170,13 +193,14 @@ median(df2_new$sum_step_day)
 ```
 
 Note that the mean value has gone up. What happened here is that there were 8
-days with all missing entries. For those days, the total number of steps were
-recorded as zero. By filling the missing values with the interval averages, we're
+days with no entries. For those days, the total number of steps were
+calculated as zero (`sum()` function on an all-`NA` vector with the `na.rm = TRUE`
+returns zero). By filling the missing values with the interval averages, we're
 essentially assigning the **mean of the non-missing days** to those entries. By replacing zero
 entries with positive values, we increase the mean.
 
 In this particular case, the median also happens to be one of these filled-in values, 
-hence the median is the same with mean. 
+hence the median is the same with mean. Note that the median has also increased.
 
 Therefore, the effect of imputing missing values in this particular way increased the mean
 and median. Because missing values were causing the number of steps to be recorded as zero, 

@@ -57,8 +57,22 @@ colSums(is.na(df))
        2304           0           0           0 
 
 We note that there are 2304 missing values in the steps column, which is the only
-column with missing values. In particular, there are 8 days where all the `steps` 
-entries are missing (2304 = 288 $\times$ 24). We'll deal with those later.
+column with missing values. Let's see which days have the missing entries.
+
+
+```r
+na_idx <- which(is.na(df$steps)) # row ids
+na_dates <- df$date[na_idx]
+unique(na_dates)
+```
+
+[1] "2012-10-01" "2012-10-08" "2012-11-01" "2012-11-04" "2012-11-09"
+[6] "2012-11-10" "2012-11-14" "2012-11-30"
+
+
+We see that there are 8 days where the `steps` 
+entries are missing. In fact for those days entries are missing for **all**
+intervals (2304 = 288 $\times$ 24). We'll deal with the missing values later.
 
 ## What is mean total number of steps taken per day?
 
@@ -89,7 +103,13 @@ hist(df2$sum_step_day, xlab = "number of steps in a day",
      ylab = "count", breaks = 10, col = "gray", main = "Histogram")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](PA1_template_files/figure-html/hist_total_step_day-1.png)<!-- -->
+
+
+```r
+mean_step <- round(mean(df2$sum_step_day), digits = 2)
+median_step <- median(df2$sum_step_day)
+```
 
 The mean number of steps taken per day is ``9354.23`` and the
 median is ``10395``.
@@ -121,7 +141,12 @@ with(df3, plot(interval_id, avg_step,type = "l",
 grid() # add grid lines
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+```r
+int_max <- df3$interval_id[which.max(df3$avg_step)]
+```
 
 The five-minute interval that has the maximum steps on average is the
 ``104``-th interval.
@@ -137,6 +162,11 @@ values (coded as `NA`). The presence of missing days may introduce
 bias into some calculations or summaries of the data.*
 
 1. *Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)*
+
+
+```r
+nrow_NA <- sum(!complete.cases(df))
+```
 
 The number of rows with missing values is ``2304``.
 
@@ -168,7 +198,7 @@ df_new$steps[na_idx] <- df3$avg_step[na_int_idx]
 
 4. *Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?*
 
-We'll repeat what we did for Question 1, this time for `df_new`.
+We'll repeat what we did above, this time for `df_new`.
 
 
 ```r
@@ -183,7 +213,7 @@ hist(df2_new$sum_step_day, xlab = "number of steps in a day",
      ylab = "count", breaks = 10, col = "gray", main = "Histogram")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 ```r
@@ -199,13 +229,14 @@ median(df2_new$sum_step_day)
 [1] 10766.19
 
 Note that the mean value has gone up. What happened here is that there were 8
-days with all missing entries. For those days, the total number of steps were
-recorded as zero. By filling the missing values with the interval averages, we're
+days with no entries. For those days, the total number of steps were
+calculated as zero (`sum()` function on an all-`NA` vector with the `na.rm = TRUE`
+returns zero). By filling the missing values with the interval averages, we're
 essentially assigning the **mean of the non-missing days** to those entries. By replacing zero
 entries with positive values, we increase the mean.
 
 In this particular case, the median also happens to be one of these filled-in values, 
-hence the median is the same with mean. 
+hence the median is the same with mean. Note that the median has also increased.
 
 Therefore, the effect of imputing missing values in this particular way increased the mean
 and median. Because missing values were causing the number of steps to be recorded as zero, 
@@ -254,7 +285,7 @@ qplot(data = df_plot, x = interval_id, y = step, facets = wknd ~ .,
       geom = "line")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 We notice that during these two months, the person seems to have started the day 
 late and end the day late in weekends compared to weekdays. Weekends also see
